@@ -1,34 +1,72 @@
-# This is a GitHub Actions workflow that will run checks on your code.
-# It's triggered on every push or pull request to your main branch.
-
-name: Code Quality Check
+name: Development Repository Check
 
 # Controls when the workflow will run
 on:
   push:
-    branches: [ "**" ] # Run on pushes to all branches
+    branches: [ "**" ]
   pull_request:
-    branches: [ "main" ] # Run on PRs targeting the main branch
-  workflow_dispatch: # Allow manual triggering from the Actions tab
+    branches: [ "main" ]
 
 jobs:
-  # This job runs the Super-Linter
-  lint:
-    name: Lint Code Base
+  validate:
+    name: Validate Changed Files
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Check out your repository code so the workflow can access it
-      - name: Checkout code
+      # Step 1: Checkout the code to access it
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          # Fetches all history for all branches and tags.
-          # This is required for the linter to perform a full analysis.
-          fetch-depth: 0
+          # Fetch depth 0 is required to properly compare branches
+          fetch-depth: 0 
 
-      # Step 2: Run the Super-Linter action
-      - name: Run Super-Linter
-        uses: github/super-linter@v6
-        env:
-          # The GITHUB_TOKEN is automatically provided by GitHub
-          # and is required for the linter to function correctly.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Step 2: Get a list of all changed files
+      - name: Get changed files
+        id: changed-files
+        run: |
+          # For Pull Requests, compare with the base branch
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "changed_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
+          # For Pushes, compare with the previous commit
+          else
+            echo "changed_files=$(git diff --name-only HEAD~1 HEAD | xargs)" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 3: Setup Node.js environment to use linters
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Step 4: Install linters for HTML, CSS, and JavaScript
+      - name: Install Linters
+        run: npm install -g html-validate stylelint stylelint-config-standard eslint
+
+      # Step 5: Validate changed HTML files
+      - name: Validate HTML files
+        run: |
+          for file in ${{ steps.changed-files.outputs.changed_files }}; do
+            if [[ $file == *.html ]]; then
+              echo "Validating HTML: $file"
+              html-validate "$file"
+            fi
+          done
+
+      # Step 6: Validate changed CSS files
+      - name: Validate CSS files
+        run: |
+          for file in ${{ steps.changed-files.outputs.changed_files }}; do
+            if [[ $file == *.css ]]; then
+              echo "Validating CSS: $file"
+              stylelint "$file"
+            fi
+          done
+
+      # Step 7: Validate changed JavaScript files
+      - name: Validate JavaScript files
+        run: |
+          for file in ${{ steps.changed-files.outputs.changed_files }}; do
+            if [[ $file == *.js ]]; then
+              echo "Validating JavaScript: $file"
+              eslint "$file"
+            fi
+          done
