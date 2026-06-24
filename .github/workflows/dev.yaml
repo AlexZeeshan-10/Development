@@ -9,7 +9,7 @@ on:
 
 jobs:
   validate:
-    name: Validate Changed Files
+    name: Check
     runs-on: ubuntu-latest
     steps:
       # Step 1: Checkout the code to access it
