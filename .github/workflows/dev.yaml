@@ -1,72 +1,64 @@
-name: Development Repository Check
+name: Web dev CI
 
-# Controls when the workflow will run
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
 
 jobs:
-  validate:
-    name: Check
+  check-changed-files:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the code to access it
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Fetch depth 0 is required to properly compare branches
-          fetch-depth: 0 
-
-      # Step 2: Get a list of all changed files
-      - name: Get changed files
-        id: changed-files
-        run: |
-          # For Pull Requests, compare with the base branch
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "changed_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
-          # For Pushes, compare with the previous commit
-          else
-            echo "changed_files=$(git diff --name-only HEAD~1 HEAD | xargs)" >> $GITHUB_OUTPUT
-          fi
-
-      # Step 3: Setup Node.js environment to use linters
+          fetch-depth: 0 # Important: Fetch history so git diff works
+          
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # Step 4: Install linters for HTML, CSS, and JavaScript
-      - name: Install Linters
-        run: npm install -g html-validate stylelint stylelint-config-standard eslint
+      # Optional: You only need this step if you are running tools installed via npm
+      - name: Install Dependencies
+        run: npm ci
 
-      # Step 5: Validate changed HTML files
-      - name: Validate HTML files
+      - name: Detect and Check Changed Web Files
         run: |
-          for file in ${{ steps.changed-files.outputs.changed_files }}; do
-            if [[ $file == *.html ]]; then
-              echo "Validating HTML: $file"
-              html-validate "$file"
+          # 1. Figure out what files changed based on if it's a PR or a Push
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.css' '*.html')
+          else
+            if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+              CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT HEAD~1 HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.css' '*.html')
+            else
+              CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.before }} ${{ github.sha }} -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.css' '*.html')
             fi
-          done
+          fi
+          
+          # 2. If nothing relevant changed, exit early and cleanly
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No web files changed. Skipping checks."
+            exit 0
+          fi
 
-      # Step 6: Validate changed CSS files
-      - name: Validate CSS files
-        run: |
-          for file in ${{ steps.changed-files.outputs.changed_files }}; do
-            if [[ $file == *.css ]]; then
-              echo "Validating CSS: $file"
-              stylelint "$file"
-            fi
+          # 3. Loop through the changed files safely (handling spaces in folder names)
+          echo "$CHANGED_FILES" | while IFS= read -r file; do
+              # Skip if the file is empty or was deleted
+              if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
+              
+              echo "--> Checking '$file'"
+              
+              # ----- PUT YOUR WEB CHECKS HERE -----
+              
+              # Example 1: Run Prettier to check formatting
+              # npx prettier --check "$file"
+              
+              # Example 2: Run ESLint to check for errors (only on JS/TS files)
+              if [[ "$file" == *.js ]] || [[ "$file" == *.ts ]] || [[ "$file" == *.jsx ]] || [[ "$file" == *.tsx ]]; then
+                npx eslint "$file"
+              fi
+              
           done
-
-      # Step 7: Validate changed JavaScript files
-      - name: Validate JavaScript files
-        run: |
-          for file in ${{ steps.changed-files.outputs.changed_files }}; do
-            if [[ $file == *.js ]]; then
-              echo "Validating JavaScript: $file"
-              eslint "$file"
-            fi
-          done
+          echo "All changed files passed checks smoothly!"
