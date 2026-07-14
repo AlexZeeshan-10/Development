@@ -21,7 +21,7 @@ jobs:
           node-version: '20'
 
       - name: Install Linting Tools
-        run: npm install -g prettier
+        run: npm install -g prettier htmlhint eslint
 
       - name: Detect and Check Changed Web Files
         run: |
@@ -48,9 +48,19 @@ jobs:
               if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
               
               echo "--> Checking formatting for '$file'"
-              
-              # Run Prettier to check formatting for HTML, CSS, JS, etc.
               prettier --check "$file"
+              
+              # Run HTMLHint for HTML files
+              if [[ "$file" == *.html ]]; then
+                echo "--> Checking HTML syntax for '$file'"
+                htmlhint "$file"
+              fi
+
+              # Run ESLint for JS/TS files
+              if [[ "$file" == *.js ]] || [[ "$file" == *.ts ]] || [[ "$file" == *.jsx ]] || [[ "$file" == *.tsx ]]; then
+                echo "--> Checking JS/TS syntax for '$file'"
+                eslint "$file"
+              fi
               
           done
           echo "All changed files passed checks smoothly!"
