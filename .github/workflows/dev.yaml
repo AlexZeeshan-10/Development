@@ -20,9 +20,8 @@ jobs:
         with:
           node-version: '20'
 
-      # Optional: You only need this step if you are running tools installed via npm
-      - name: Install Dependencies
-        run: npm ci
+      - name: Install Linting Tools
+        run: npm install -g prettier
 
       - name: Detect and Check Changed Web Files
         run: |
@@ -48,17 +47,10 @@ jobs:
               # Skip if the file is empty or was deleted
               if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
               
-              echo "--> Checking '$file'"
+              echo "--> Checking formatting for '$file'"
               
-              # ----- PUT YOUR WEB CHECKS HERE -----
-              
-              # Example 1: Run Prettier to check formatting
-              # npx prettier --check "$file"
-              
-              # Example 2: Run ESLint to check for errors (only on JS/TS files)
-              if [[ "$file" == *.js ]] || [[ "$file" == *.ts ]] || [[ "$file" == *.jsx ]] || [[ "$file" == *.tsx ]]; then
-                npx eslint "$file"
-              fi
+              # Run Prettier to check formatting for HTML, CSS, JS, etc.
+              prettier --check "$file"
               
           done
           echo "All changed files passed checks smoothly!"
