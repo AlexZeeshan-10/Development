@@ -26,6 +26,9 @@ jobs:
       - name: Detect and Check Changed Web Files
         run: |
           # 1. Figure out what files changed based on if it's a PR or a Push
+          # Disable quotePath so files with spaces aren't wrapped in quotes
+          git config core.quotePath false
+          
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.css' '*.html')
           else
