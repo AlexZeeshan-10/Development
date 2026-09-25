@@ -1,12 +1,11 @@
-import js from "@eslint/js";
-
 export default [
-    js.configs.recommended,
     {
         languageOptions: {
             globals: {
                 browser: true,
-                node: true
+                node: true,
+                $: "readonly",
+                jQuery: "readonly"
             }
         },
         rules: {
