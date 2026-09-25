@@ -1,0 +1,26 @@
+{
+  "type": "module",
+  "dependencies": {
+    "inquirer": "^14.2.2",
+    "qr-image": "^3.2.0"
+  },
+  "name": "development",
+  "version": "1.0.0",
+  "description": "Projects, exercises, and implementations built to track progress and develop Full Stack Web Development skills.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexZeeshan-10/Development.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AlexZeeshan-10/Development/issues"
+  },
+  "homepage": "https://github.com/AlexZeeshan-10/Development#readme"
+}
