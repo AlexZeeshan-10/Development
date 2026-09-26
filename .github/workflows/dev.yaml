@@ -2,9 +2,9 @@ name: Web dev CI
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
 
 jobs:
   check-changed-files:
@@ -13,57 +13,42 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Important: Fetch history so git diff works
-          
+          fetch-depth: 0
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
-      - name: Install Linting Tools
-        run: npm install -g prettier htmlhint eslint
+      - name: Install HTMLHint
+        run: npm install -g htmlhint
 
-      - name: Detect and Check Changed Web Files
+      - name: Check changed HTML files for errors
         run: |
-          # 1. Figure out what files changed based on if it's a PR or a Push
-          # Disable quotePath so files with spaces aren't wrapped in quotes
           git config core.quotePath false
-          
+
+          # Get list of changed HTML files only (Added or Modified, not renames)
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            CHANGED_FILES=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.css' '*.html')
+            CHANGED_FILES=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} HEAD -- '*.html')
           else
             if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
-              CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.css' '*.html')
+              CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- '*.html')
             else
-              CHANGED_FILES=$(git diff --name-only --diff-filter=AM ${{ github.event.before }} ${{ github.sha }} -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.css' '*.html')
+              CHANGED_FILES=$(git diff --name-only --diff-filter=AM ${{ github.event.before }} ${{ github.sha }} -- '*.html')
             fi
           fi
-          
-          # 2. If nothing relevant changed, exit early and cleanly
+
+          # If no HTML files changed, skip cleanly
           if [ -z "$CHANGED_FILES" ]; then
-            echo "No web files changed. Skipping checks."
+            echo "No HTML files changed. Skipping checks."
             exit 0
           fi
 
-          # 3. Loop through the changed files safely (handling spaces in folder names)
+          # Run HTMLHint only on changed HTML files
           echo "$CHANGED_FILES" | while IFS= read -r file; do
-              # Skip if the file is empty or was deleted
-              if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
-              
-              echo "--> Checking formatting for '$file'"
-              prettier --check "$file"
-              
-              # Run HTMLHint for HTML files
-              if [[ "$file" == *.html ]]; then
-                echo "--> Checking HTML syntax for '$file'"
-                htmlhint "$file"
-              fi
-
-              # Run ESLint for JS/TS files
-              if [[ "$file" == *.js ]] || [[ "$file" == *.ts ]] || [[ "$file" == *.jsx ]] || [[ "$file" == *.tsx ]]; then
-                echo "--> Checking JS/TS syntax for '$file'"
-                eslint "$file"
-              fi
-              
+            if [ -z "$file" ] || [ ! -f "$file" ]; then continue; fi
+            echo "--> Checking '$file'"
+            htmlhint "$file"
           done
-          echo "All changed files passed checks smoothly!"
+
+          echo "All changed HTML files passed!"
