@@ -26,6 +26,9 @@ h1 {
 
 p {
   color: grey;
+  font-style: italic;
+  font-weight: bold;
+  font-size: 18px;
 }
 
 .profile {
