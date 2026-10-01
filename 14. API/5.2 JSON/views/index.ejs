@@ -7,29 +7,41 @@
 </head>
 
 <body>
-  <h1>Taco Town 🌮</h1>
+  <h1>Taco Town</h1>
+
 
   <form action="/recipe" method="POST" class="buttons">
-    <button type="submit" value="chicken" name="choice">🍗</button>
-    <button type="submit" value="beef" name="choice">🥩</button>
-    <button type="submit" value="fish" name="choice">🐟</button>
+    <button type="submit" value="chicken" name="choice"><img src="https://avatarfiles.alphacoders.com/373/thumb-1920-373942.png" alt="image of a chicken"></button>
+    <button type="submit" value="beef" name="choice"><img src="https://thumbs.dreamstime.com/b/grilled-steak-meat-15105004.jpg?w=768" alt=""></button>
+    <button type="submit" value="fish" name="choice"><img src="https://thumbs.dreamstime.com/b/grilled-fish-312237.jpg?w=992" alt="fish food"></button>
   </form>
-  <div id="recipeContainer" class="hidden">
+  <% if (locals.recipe) { %>
+  <div id="recipeContainer">
 
-    <!-- If no recipe yet, show: -->
-    <h2>Pick your favourite taco ingredient 👆</h2>
-    <!-- Else, show the recipe name e.g. <h2>Recipe name</h2>-->
+    <h2 id="recipeTitle">
+      <%= recipe.name %>
+    </h2>
 
     <h3>Ingredients:</h3>
     <ul id="ingredientsList">
-      <li>Protein name, protein preparation</li>
-      <li>Salsa name</li>
-      <li>Every other topping</li>
+      <li>
+        <%= recipe.ingredients.protein.name %>, <%= recipe.ingredients.protein.preparation %>
+      </li>
+      <li>
+        <%= recipe.ingredients.salsa.name %>
+      </li>
+      <% recipe.ingredients.toppings.forEach(topping => { %>
+        <li>
+          <%= topping.quantity %> of <%= topping.name %>
+        </li>
+      <% }) %>
     </ul>
 
-
-
   </div>
+  <% } else { %>
+    <h2>Pick your favourite taco ingredient 👆</h2>
+  <% } %>
+
 </body>
 
 </html>
