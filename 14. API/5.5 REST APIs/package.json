@@ -1,7 +1,12 @@
 {
-  "name": "5.4-api-authentication",
+  "dependencies": {
+    "axios": "^1.20.0",
+    "body-parser": "^1.20.8",
+    "ejs": "^3.1.9",
+    "express": "^4.22.3"
+  },
+  "name": "5.5-rest-apis",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -10,9 +15,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "axios": "^1.4.0",
-    "ejs": "^3.1.9",
-    "express": "^4.22.3"
-  }
+  "description": ""
 }
